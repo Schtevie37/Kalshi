@@ -43,6 +43,7 @@ session_set_cookie_params([
 ]);
 session_name('kalshipaper');
 session_start();
+resume_remembered_login();
 
 header('Content-Type: text/html; charset=utf-8');
 header('X-Content-Type-Options: nosniff');

@@ -174,6 +174,22 @@ try {
 }
 check($badTicker, 'live lookup rejects a path that is not a ticker');
 
+$selector = str_repeat('ab', 16);
+$verifier = random_bytes(32);
+$cookie = $selector . '.' . bin2hex($verifier);
+$parsed = parse_remember_token($cookie);
+check(
+    is_array($parsed) && $parsed['selector'] === $selector && $parsed['verifier'] === $verifier,
+    'remember token splits into a selector and verifier'
+);
+check(parse_remember_token($selector . '.abcd') === null, 'a short remember token is rejected');
+check(parse_remember_token($selector . '.' . bin2hex($verifier) . 'ff') === null, 'a long remember token is rejected');
+check(iso_time(0) === 'Jan 1, 1970 00:00 UTC', 'unix time stays UTC unless asked');
+check(iso_time(0, 'America/New_York') === 'Dec 31, 1969 19:00 ET', 'Eastern time follows New York, including the date');
+check(remember_lifetime() === 400 * 24 * 60 * 60, 'remember cookie lasts 400 days');
+check(hash_equals(remember_token_hash($verifier), hash('sha256', $verifier)), 'remember token is stored as a hash');
+check(!hash_equals(remember_token_hash($verifier), remember_token_hash(random_bytes(32))), 'a different remember verifier does not match');
+
 @unlink((string) $rsaKeyPath);
 @unlink((string) $rsaMsgPath);
 @unlink((string) $rsaSigPath);

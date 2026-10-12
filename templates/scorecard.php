@@ -1,5 +1,4 @@
 <h1>Scorecard</h1>
-<p class="lede">Record a live-market position you already have. This page reads the public result later and does not send an order or your demo key.</p>
 
 <section class="panel">
     <header class="panel-head"><h2>Add a position</h2></header>
@@ -7,7 +6,7 @@
         <?= csrf_field() ?>
         <input type="hidden" name="action" value="add">
         <label>Ticker
-            <input name="ticker" required spellcheck="false" autocomplete="off" placeholder="KXNFLTD-26OCT11BALATL-ATLBROBINSON7-1" value="">
+            <input name="ticker" required spellcheck="false" autocomplete="off" value="">
         </label>
         <label>Side
             <select name="outcome" required>
@@ -16,13 +15,12 @@
             </select>
         </label>
         <label>Price you paid
-            <input name="pay_price" required inputmode="decimal" spellcheck="false" autocomplete="off" placeholder="0.40">
+            <input name="pay_price" required inputmode="decimal" spellcheck="false" autocomplete="off" value="">
         </label>
         <label>Contracts
             <input name="contract_count" required inputmode="decimal" spellcheck="false" autocomplete="off" value="1">
         </label>
         <button type="submit">Save position</button>
-        <p class="fine">Use dollars, so 40 cents is 0.40. Ten Yes contracts at 0.40 cost $4. A Yes result pays $10. A No result pays $0. Fees are left out.</p>
     </form>
 </section>
 
@@ -79,7 +77,6 @@ $asPercent = static function (mixed $value): string {
             <strong><?= h($asPercent($summary['average_return'])) ?></strong>
         </article>
     </section>
-    <p class="fine">Success and average return use settled positions only. Earned is their payout minus their cost. Still open is stake waiting on a result. Fees are left out.</p>
 <?php endif; ?>
 
 <section class="panel">
@@ -87,7 +84,7 @@ $asPercent = static function (mixed $value): string {
     <?php if ($positions === []): ?>
         <p class="empty">No positions yet.</p>
     <?php else: ?>
-        <div class="table-wrap cards">
+        <div class="table-wrap positions">
             <table>
                 <thead>
                 <tr>
@@ -110,7 +107,7 @@ $asPercent = static function (mixed $value): string {
                     $settled = $score !== null;
                     ?>
                     <tr>
-                        <td data-label="When"><?= h(iso_time($position['created_at'])) ?></td>
+                        <td data-label="When"><?= h(iso_time($position['created_at'], 'America/New_York')) ?></td>
                         <td data-label="Market"><span class="ticker"><?= h($position['ticker']) ?></span></td>
                         <td data-label="Side"><span class="pill <?= $position['outcome'] === 'no' ? 'no' : 'yes' ?>"><?= h(strtoupper((string) $position['outcome'])) ?></span></td>
                         <td class="num" data-label="Price"><?= h(px((string) $position['pay_price'])) ?></td>
@@ -134,6 +131,5 @@ $asPercent = static function (mixed $value): string {
                 </tbody>
             </table>
         </div>
-        <p class="fine">An open row is checked again the next time you open this page. A won or lost row is not checked again.</p>
     <?php endif; ?>
 </section>

@@ -46,13 +46,13 @@ function dispatch(string $page): void
 
 function dispatch_home(): void
 {
-    redirect_to(current_user() ? 'portfolio' : 'login');
+    redirect_to(current_user() ? 'scorecard' : 'login');
 }
 
 function dispatch_login(): void
 {
     if (current_user() !== null) {
-        redirect_to('portfolio');
+        redirect_to('scorecard');
     }
     $error = null;
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -77,7 +77,8 @@ function dispatch_login(): void
                 session_regenerate_id(true);
                 $_SESSION['user_id'] = (int) $row['id'];
                 unset($_SESSION['login_fails'], $_SESSION['login_locked_until']);
-                redirect_to('portfolio');
+                remember_login((int) $row['id']);
+                redirect_to('scorecard');
             }
         }
     }
@@ -87,7 +88,7 @@ function dispatch_login(): void
 function dispatch_register(): void
 {
     if (current_user() !== null) {
-        redirect_to('portfolio');
+        redirect_to('scorecard');
     }
     $error = null;
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -106,7 +107,9 @@ function dispatch_register(): void
                 $stmt = db()->prepare('INSERT INTO users (email, password_hash) VALUES (?, ?)');
                 $stmt->execute([$email, password_hash($password, PASSWORD_DEFAULT)]);
                 session_regenerate_id(true);
-                $_SESSION['user_id'] = (int) db()->lastInsertId();
+                $userId = (int) db()->lastInsertId();
+                $_SESSION['user_id'] = $userId;
+                remember_login($userId);
                 flash('ok', 'Account created. Add a Kalshi demo API key when you want to place paper orders. Market data is available before that.');
                 redirect_to('settings');
             } catch (PDOException $e) {
@@ -123,6 +126,7 @@ function dispatch_register(): void
 
 function dispatch_logout(): void
 {
+    forget_remembered_login();
     $_SESSION = [];
     if (ini_get('session.use_cookies')) {
         $params = session_get_cookie_params();

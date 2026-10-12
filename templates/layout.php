@@ -20,6 +20,8 @@ $trading = !is_array($exchange) || !array_key_exists('trading_active', $exchange
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#14110f">
     <title><?= h($title) ?> · Paper desk</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/assets/app.css">
@@ -27,13 +29,19 @@ $trading = !is_array($exchange) || !array_key_exists('trading_active', $exchange
 <body>
 <div class="app">
     <aside class="nav">
-        <a class="brand" href="/?page=portfolio">
-            <span class="brand-mark">P</span>
-            <span>
-                <strong>Paper desk</strong>
-                <small>Kalshi demo</small>
-            </span>
-        </a>
+        <div class="nav-top">
+            <a class="brand" href="/?page=scorecard">
+                <span class="brand-mark">P</span>
+                <span>
+                    <strong>Paper desk</strong>
+                    <small>Kalshi demo</small>
+                </span>
+            </a>
+            <label class="nav-toggle">
+                <input type="checkbox" aria-label="Menu">
+                <span class="nav-burger" aria-hidden="true"></span>
+            </label>
+        </div>
         <nav>
             <?php foreach ($nav as $key => $label): ?>
                 <a class="<?= $page === $key ? 'active' : '' ?>" href="/?page=<?= h($key) ?>"><?= h($label) ?></a>

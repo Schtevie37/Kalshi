@@ -58,6 +58,18 @@ CREATE TABLE IF NOT EXISTS tracked_positions (
   CONSTRAINT tracked_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS login_tokens (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id INT UNSIGNED NOT NULL,
+  selector CHAR(32) NOT NULL,
+  token_hash CHAR(64) NOT NULL,
+  expires_at INT UNSIGNED NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY login_tokens_selector (selector),
+  KEY login_tokens_user_id (user_id),
+  CONSTRAINT login_tokens_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS api_log (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   user_id INT UNSIGNED NOT NULL,

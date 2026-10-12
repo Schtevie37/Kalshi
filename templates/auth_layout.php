@@ -7,6 +7,8 @@ $title = $title ?? 'Paper desk';
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#14110f">
     <title><?= h($title) ?> · Paper desk</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/assets/app.css">
