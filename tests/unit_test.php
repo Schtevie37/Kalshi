@@ -7,6 +7,9 @@ require dirname(__DIR__) . '/src/Pricing.php';
 require dirname(__DIR__) . '/src/Vault.php';
 require dirname(__DIR__) . '/src/KalshiClient.php';
 require dirname(__DIR__) . '/src/Trading.php';
+require dirname(__DIR__) . '/src/functions.php';
+require dirname(__DIR__) . '/src/Scorecard.php';
+require dirname(__DIR__) . '/src/LiveMarket.php';
 
 $failed = 0;
 
@@ -110,6 +113,48 @@ $payload = Trading::payload(
     '8c35ecb3-328f-4f52-8c7c-0f4b9862f8d1'
 );
 check($payload['side'] === 'ask' && $payload['price'] === '0.6000' && $payload['post_only'] === false, 'order payload quotes the yes book');
+
+$entry = Scorecard::entry('kxnfltd-26oct11balatl-atlbrobinson7-1', 'YES', '0.40', '10');
+check(
+    $entry['ticker'] === 'KXNFLTD-26OCT11BALATL-ATLBROBINSON7-1'
+        && $entry['outcome'] === 'yes'
+        && $entry['pay_price'] === '0.4000'
+        && $entry['count'] === '10.00',
+    'scorecard entry normalizes a live ticker'
+);
+$win = Scorecard::settle('yes', '0.4000', '10.00', 'yes');
+check($win['won'] && $win['cost'] === '4.0000' && $win['payout'] === '10.0000' && $win['profit'] === '6.0000', 'yes at 0.40 pays 6 when the result is yes');
+$loss = Scorecard::settle('yes', '0.4000', '10.00', 'no');
+check(!$loss['won'] && $loss['payout'] === '0.0000' && $loss['profit'] === '-4.0000', 'yes at 0.40 loses the cost when the result is no');
+$noWin = Scorecard::settle('no', '0.4000', '10.00', 'no');
+check($noWin['won'] && $noWin['profit'] === '6.0000', 'no at 0.40 wins when the result is no');
+check(Scorecard::marketResult(['result' => '']) === null, 'an empty result stays open');
+check(Scorecard::marketResult(['result' => 'YES']) === 'yes', 'a yes result settles');
+check(Scorecard::marketResult([]) === null, 'a missing result stays open');
+$leadingDot = Scorecard::entry('KXNFLTD-26OCT11BALATL-ATLBROBINSON7-1', 'yes', '.62', '1');
+check($leadingDot['pay_price'] === '0.6200' && $leadingDot['count'] === '1.00', 'a price typed as .62 is 0.6200');
+$priceRejected = false;
+try {
+    Scorecard::entry('KXNFLTD-26OCT11BALATL-ATLBROBINSON7-1', 'yes', '1', '1');
+} catch (InvalidArgumentException) {
+    $priceRejected = true;
+}
+check($priceRejected, 'a price of one dollar is rejected');
+
+$liveUrl = LiveMarket::marketUrl('KXNFLTD-26OCT11BALATL-ATLBROBINSON7-1');
+check(
+    $liveUrl === 'https://external-api.kalshi.com/trade-api/v2/markets/KXNFLTD-26OCT11BALATL-ATLBROBINSON7-1',
+    'live lookup is one public market URL'
+);
+$liveSource = (string) file_get_contents(dirname(__DIR__) . '/src/LiveMarket.php');
+check(!str_contains($liveSource, 'KALSHI-ACCESS') && !str_contains($liveSource, 'privateKey') && !str_contains($liveSource, 'POST'), 'live lookup sends no key and has no POST');
+$badTicker = false;
+try {
+    LiveMarket::marketUrl('../portfolio/orders');
+} catch (InvalidArgumentException) {
+    $badTicker = true;
+}
+check($badTicker, 'live lookup rejects a path that is not a ticker');
 
 @unlink((string) $rsaKeyPath);
 @unlink((string) $rsaMsgPath);

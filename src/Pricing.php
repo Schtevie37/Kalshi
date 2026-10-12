@@ -81,7 +81,7 @@ final class Pricing
     public static function parse(string $raw, int $scale, string $label): int
     {
         $raw = trim($raw);
-        if (!preg_match('/^\d+(\.\d+)?$/', $raw)) {
+        if (!preg_match('/^(?:\d+(?:\.\d+)?|\.\d+)$/', $raw)) {
             throw new InvalidArgumentException($label . ' must be a positive number.');
         }
         [$whole, $frac] = array_pad(explode('.', $raw, 2), 2, '');

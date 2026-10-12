@@ -18,6 +18,7 @@ function dispatch(string $page): void
             'orders' => dispatch_orders(),
             'fills' => dispatch_fills(),
             'journal' => dispatch_journal(),
+            'scorecard' => dispatch_scorecard(),
             'settings' => dispatch_settings(),
             default => render_missing(),
         };
@@ -523,6 +524,110 @@ function dispatch_journal(): void
         'exchange' => exchange_status(demo_client()),
         'entries' => $orders->fetchAll(),
         'calls' => $calls->fetchAll(),
+    ]);
+}
+
+function dispatch_scorecard(): void
+{
+    $user = require_user();
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        require_csrf();
+        $action = (string) ($_POST['action'] ?? '');
+        try {
+            if ($action === 'delete') {
+                $id = (int) ($_POST['id'] ?? 0);
+                if ($id <= 0) {
+                    throw new InvalidArgumentException('That position was not found.');
+                }
+                $stmt = db()->prepare('DELETE FROM tracked_positions WHERE id = ? AND user_id = ?');
+                $stmt->execute([$id, (int) $user['id']]);
+                flash('ok', 'Position removed.');
+                redirect_to('scorecard');
+            }
+            if ($action === 'add') {
+                $entry = Scorecard::entry(
+                    (string) ($_POST['ticker'] ?? ''),
+                    (string) ($_POST['outcome'] ?? ''),
+                    (string) ($_POST['pay_price'] ?? ''),
+                    (string) ($_POST['contract_count'] ?? '')
+                );
+                $stmt = db()->prepare(
+                    'INSERT INTO tracked_positions (user_id, ticker, outcome, pay_price, contract_count)
+                     VALUES (?, ?, ?, ?, ?)'
+                );
+                $stmt->execute([
+                    (int) $user['id'],
+                    $entry['ticker'],
+                    $entry['outcome'],
+                    $entry['pay_price'],
+                    $entry['count'],
+                ]);
+                flash('ok', 'Position saved. Open this page again after the event to see if it won.');
+                redirect_to('scorecard');
+            }
+            throw new InvalidArgumentException('Unknown scorecard action.');
+        } catch (Throwable $e) {
+            flash('error', $e instanceof PDOException ? 'The desk could not use MySQL.' : $e->getMessage());
+            redirect_to('scorecard');
+        }
+    }
+
+    $stmt = db()->prepare(
+        'SELECT id, ticker, outcome, pay_price, contract_count, market_result, settled_at, created_at
+         FROM tracked_positions WHERE user_id = ? ORDER BY id DESC'
+    );
+    $stmt->execute([(int) $user['id']]);
+    $rows = $stmt->fetchAll();
+    if (!is_array($rows)) {
+        $rows = [];
+    }
+    $live = new LiveMarket();
+    $update = db()->prepare(
+        'UPDATE tracked_positions SET market_result = ?, settled_at = UTC_TIMESTAMP()
+         WHERE id = ? AND user_id = ? AND market_result IS NULL'
+    );
+    foreach ($rows as $index => $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+        $row['check_error'] = null;
+        $row['score'] = null;
+        $result = $row['market_result'] ?? null;
+        if ($result === 'yes' || $result === 'no') {
+            $row['score'] = Scorecard::settle(
+                (string) $row['outcome'],
+                (string) $row['pay_price'],
+                (string) $row['contract_count'],
+                (string) $result
+            );
+            $rows[$index] = $row;
+            continue;
+        }
+        try {
+            $market = $live->fetch((string) $row['ticker']);
+            $found = Scorecard::marketResult($market);
+            if ($found === null) {
+                $rows[$index] = $row;
+                continue;
+            }
+            $update->execute([$found, (int) $row['id'], (int) $user['id']]);
+            $row['market_result'] = $found;
+            $row['score'] = Scorecard::settle(
+                (string) $row['outcome'],
+                (string) $row['pay_price'],
+                (string) $row['contract_count'],
+                $found
+            );
+        } catch (Throwable $e) {
+            $row['check_error'] = $e->getMessage();
+        }
+        $rows[$index] = $row;
+    }
+
+    view('scorecard', [
+        'title' => 'Scorecard',
+        'page' => 'scorecard',
+        'positions' => $rows,
     ]);
 }
 

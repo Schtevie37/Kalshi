@@ -5,6 +5,7 @@ $user = $user ?? null;
 $flashes = $flashes ?? [];
 $title = $title ?? 'Paper desk';
 $nav = [
+    'scorecard' => 'Scorecard',
     'portfolio' => 'Portfolio',
     'markets' => 'Markets',
     'orders' => 'Orders',

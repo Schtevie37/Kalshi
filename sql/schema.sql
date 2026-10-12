@@ -43,6 +43,21 @@ CREATE TABLE IF NOT EXISTS order_journal (
   CONSTRAINT journal_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS tracked_positions (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id INT UNSIGNED NOT NULL,
+  ticker VARCHAR(128) NOT NULL,
+  outcome ENUM('yes', 'no') NOT NULL,
+  pay_price DECIMAL(8,4) NOT NULL,
+  contract_count DECIMAL(12,2) NOT NULL,
+  market_result ENUM('yes', 'no') NULL,
+  settled_at DATETIME NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY tracked_user_time (user_id, created_at),
+  CONSTRAINT tracked_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS api_log (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   user_id INT UNSIGNED NOT NULL,

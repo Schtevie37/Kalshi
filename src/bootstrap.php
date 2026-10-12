@@ -28,6 +28,8 @@ require __DIR__ . '/Pricing.php';
 require __DIR__ . '/Vault.php';
 require __DIR__ . '/KalshiClient.php';
 require __DIR__ . '/Trading.php';
+require __DIR__ . '/Scorecard.php';
+require __DIR__ . '/LiveMarket.php';
 require __DIR__ . '/functions.php';
 require __DIR__ . '/routes.php';
 
