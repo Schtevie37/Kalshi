@@ -70,6 +70,7 @@ h3 { font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.06em; colo
 .kicker { margin: 0 0 0.35rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; }
 .lede { color: var(--muted); max-width: 42rem; }
 .fine { color: var(--muted); font-size: 0.88rem; }
+.market-name { display: block; }
 .ticker { display: block; color: var(--muted); font-family: var(--mono); font-size: 0.75rem; margin-top: 0.15rem; }
 .empty { color: var(--muted); padding: 0.5rem 0 1rem; }
 

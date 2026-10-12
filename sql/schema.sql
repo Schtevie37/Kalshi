@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS tracked_positions (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   user_id INT UNSIGNED NOT NULL,
   ticker VARCHAR(128) NOT NULL,
+  market_title VARCHAR(255) NULL,
   outcome ENUM('yes', 'no') NOT NULL,
   pay_price DECIMAL(8,4) NOT NULL,
   contract_count DECIMAL(12,2) NOT NULL,

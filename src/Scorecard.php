@@ -54,6 +54,26 @@ final class Scorecard
         return $result === 'yes' || $result === 'no' ? $result : null;
     }
 
+    /**
+     * @param array<string, mixed> $market
+     */
+    public static function marketTitle(array $market): ?string
+    {
+        $title = $market['title'] ?? null;
+        if (!is_string($title)) {
+            return null;
+        }
+        $title = trim(preg_replace('/\s+/', ' ', $title) ?? $title);
+        if ($title === '') {
+            return null;
+        }
+        if (mb_strlen($title) > 255) {
+            $title = rtrim(mb_substr($title, 0, 254)) . '…';
+        }
+
+        return $title;
+    }
+
     public static function stake(string $payPrice, string $count): string
     {
         $pay = Pricing::parse($payPrice, Pricing::PRICE_SCALE, 'Price');

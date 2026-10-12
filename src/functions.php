@@ -122,6 +122,25 @@ function require_user(): array
     return $user;
 }
 
+function tracked_positions_title_ready(): bool
+{
+    static $ready = null;
+    if ($ready !== null) {
+        return $ready;
+    }
+    try {
+        $columns = db()->query("SHOW COLUMNS FROM tracked_positions LIKE 'market_title'");
+        if ($columns === false || $columns->fetch() === false) {
+            db()->exec('ALTER TABLE tracked_positions ADD COLUMN market_title VARCHAR(255) NULL AFTER ticker');
+        }
+        $ready = true;
+    } catch (Throwable) {
+        $ready = false;
+    }
+
+    return $ready;
+}
+
 /** Browsers keep a cookie for at most 400 days. Each visit slides that window forward. */
 function remember_lifetime(): int
 {

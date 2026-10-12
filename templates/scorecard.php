@@ -108,7 +108,7 @@ $asPercent = static function (mixed $value): string {
                     ?>
                     <tr>
                         <td data-label="When"><?= h(iso_time($position['created_at'], 'America/New_York')) ?></td>
-                        <td data-label="Market"><span class="ticker"><?= h($position['ticker']) ?></span></td>
+                        <td data-label="Market"><?php if (!empty($position['market_title'])): ?><span class="market-name"><?= h($position['market_title']) ?></span><?php endif; ?><span class="ticker"><?= h($position['ticker']) ?></span></td>
                         <td data-label="Side"><span class="pill <?= $position['outcome'] === 'no' ? 'no' : 'yes' ?>"><?= h(strtoupper((string) $position['outcome'])) ?></span></td>
                         <td class="num" data-label="Price"><?= h(px((string) $position['pay_price'])) ?></td>
                         <td class="num" data-label="Contracts"><?= h((string) $position['contract_count']) ?></td>
@@ -116,7 +116,6 @@ $asPercent = static function (mixed $value): string {
                         <td data-label="Result">
                             <?php if ($settled): ?>
                                 <span class="pill <?= $score['won'] ? 'yes' : 'no' ?>"><?= $score['won'] ? 'Won' : 'Lost' ?></span>
-                                <span class="ticker"><?= h(strtoupper((string) $position['market_result'])) ?></span>
                             <?php else: ?>
                                 Open
                                 <?php if (!empty($position['check_error'])): ?>

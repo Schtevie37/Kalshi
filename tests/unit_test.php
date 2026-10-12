@@ -122,6 +122,9 @@ check(
         && $entry['count'] === '10.00',
     'scorecard entry normalizes a live ticker'
 );
+check(Scorecard::marketTitle(['title' => "  Will Atlanta's Bijan Robinson score?  "]) === "Will Atlanta's Bijan Robinson score?", 'scorecard keeps the market title');
+check(Scorecard::marketTitle(['title' => '   ']) === null, 'a blank market title is left off');
+check(Scorecard::marketTitle([]) === null, 'a market with no title is left off');
 $win = Scorecard::settle('yes', '0.4000', '10.00', 'yes');
 check($win['won'] && $win['cost'] === '4.0000' && $win['payout'] === '10.0000' && $win['profit'] === '6.0000', 'yes at 0.40 pays 6 when the result is yes');
 $loss = Scorecard::settle('yes', '0.4000', '10.00', 'no');

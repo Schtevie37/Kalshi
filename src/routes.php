@@ -555,17 +555,38 @@ function dispatch_scorecard(): void
                     (string) ($_POST['pay_price'] ?? ''),
                     (string) ($_POST['contract_count'] ?? '')
                 );
-                $stmt = db()->prepare(
-                    'INSERT INTO tracked_positions (user_id, ticker, outcome, pay_price, contract_count)
-                     VALUES (?, ?, ?, ?, ?)'
-                );
-                $stmt->execute([
-                    (int) $user['id'],
-                    $entry['ticker'],
-                    $entry['outcome'],
-                    $entry['pay_price'],
-                    $entry['count'],
-                ]);
+                $marketTitle = null;
+                try {
+                    $marketTitle = Scorecard::marketTitle((new LiveMarket())->fetch($entry['ticker']));
+                } catch (Throwable) {
+                    $marketTitle = null;
+                }
+                if (tracked_positions_title_ready()) {
+                    $stmt = db()->prepare(
+                        'INSERT INTO tracked_positions (user_id, ticker, market_title, outcome, pay_price, contract_count)
+                         VALUES (?, ?, ?, ?, ?, ?)'
+                    );
+                    $stmt->execute([
+                        (int) $user['id'],
+                        $entry['ticker'],
+                        $marketTitle,
+                        $entry['outcome'],
+                        $entry['pay_price'],
+                        $entry['count'],
+                    ]);
+                } else {
+                    $stmt = db()->prepare(
+                        'INSERT INTO tracked_positions (user_id, ticker, outcome, pay_price, contract_count)
+                         VALUES (?, ?, ?, ?, ?)'
+                    );
+                    $stmt->execute([
+                        (int) $user['id'],
+                        $entry['ticker'],
+                        $entry['outcome'],
+                        $entry['pay_price'],
+                        $entry['count'],
+                    ]);
+                }
                 flash('ok', 'Position saved. Open this page again after the event to see if it won.');
                 redirect_to('scorecard');
             }
@@ -576,8 +597,9 @@ function dispatch_scorecard(): void
         }
     }
 
+    $hasTitle = tracked_positions_title_ready();
     $stmt = db()->prepare(
-        'SELECT id, ticker, outcome, pay_price, contract_count, market_result, settled_at, created_at
+        'SELECT id, ticker, ' . ($hasTitle ? 'market_title, ' : '') . 'outcome, pay_price, contract_count, market_result, settled_at, created_at
          FROM tracked_positions WHERE user_id = ? ORDER BY id DESC'
     );
     $stmt->execute([(int) $user['id']]);
@@ -590,25 +612,47 @@ function dispatch_scorecard(): void
         'UPDATE tracked_positions SET market_result = ?, settled_at = UTC_TIMESTAMP()
          WHERE id = ? AND user_id = ? AND market_result IS NULL'
     );
+    $saveTitle = $hasTitle
+        ? db()->prepare(
+            'UPDATE tracked_positions SET market_title = ?
+             WHERE id = ? AND user_id = ? AND market_title IS NULL'
+        )
+        : null;
     foreach ($rows as $index => $row) {
         if (!is_array($row)) {
             continue;
         }
         $row['check_error'] = null;
         $row['score'] = null;
+        $storedTitle = $row['market_title'] ?? null;
+        $row['market_title'] = is_string($storedTitle) && $storedTitle !== '' ? $storedTitle : null;
         $result = $row['market_result'] ?? null;
-        if ($result === 'yes' || $result === 'no') {
+        $settled = $result === 'yes' || $result === 'no';
+        if ($settled) {
             $row['score'] = Scorecard::settle(
                 (string) $row['outcome'],
                 (string) $row['pay_price'],
                 (string) $row['contract_count'],
                 (string) $result
             );
+        }
+        if ($settled && $row['market_title'] !== null) {
             $rows[$index] = $row;
             continue;
         }
         try {
             $market = $live->fetch((string) $row['ticker']);
+            $title = Scorecard::marketTitle($market);
+            if ($title !== null) {
+                $row['market_title'] = $title;
+                if ($saveTitle !== null && !is_string($storedTitle)) {
+                    $saveTitle->execute([$title, (int) $row['id'], (int) $user['id']]);
+                }
+            }
+            if ($settled) {
+                $rows[$index] = $row;
+                continue;
+            }
             $found = Scorecard::marketResult($market);
             if ($found === null) {
                 $rows[$index] = $row;
@@ -623,7 +667,9 @@ function dispatch_scorecard(): void
                 $found
             );
         } catch (Throwable $e) {
-            $row['check_error'] = $e->getMessage();
+            if (!$settled) {
+                $row['check_error'] = $e->getMessage();
+            }
         }
         $rows[$index] = $row;
     }
