@@ -628,6 +628,7 @@ function dispatch_scorecard(): void
         'title' => 'Scorecard',
         'page' => 'scorecard',
         'positions' => $rows,
+        'totals' => Scorecard::totals($rows),
     ]);
 }
 

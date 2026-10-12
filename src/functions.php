@@ -131,7 +131,12 @@ function view(string $template, array $data = []): void
     $title = (string) ($data['title'] ?? 'Paper desk');
     extract($data, EXTR_SKIP);
     ob_start();
-    require dirname(__DIR__) . '/templates/' . $template . '.php';
+    try {
+        require dirname(__DIR__) . '/templates/' . $template . '.php';
+    } catch (Throwable $e) {
+        ob_end_clean();
+        throw $e;
+    }
     $content = (string) ob_get_clean();
     require dirname(__DIR__) . '/templates/' . ($bare ? 'auth_layout.php' : 'layout.php');
 }

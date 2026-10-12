@@ -7,7 +7,7 @@
 <?php elseif ($fills === []): ?>
     <p class="empty">No fills returned.</p>
 <?php else: ?>
-    <div class="table-wrap">
+    <div class="table-wrap cards">
         <table>
             <thead>
             <tr>
@@ -33,12 +33,12 @@
                 }
                 ?>
                 <tr>
-                    <td><?php if ($tickerValue !== '—'): ?><a href="/?page=market&amp;ticker=<?= h(rawurlencode($tickerValue)) ?>"><?= h($tickerValue) ?></a><?php else: ?>—<?php endif; ?></td>
-                    <td><?= h(pick($row, ['outcome_side', 'side'])) ?></td>
-                    <td class="num"><?= h(pick($row, ['count_fp', 'count'])) ?></td>
-                    <td class="num"><?= h(px(pick($row, ['yes_price_dollars', 'price'], ''))) ?></td>
-                    <td><?= h($role) ?></td>
-                    <td><?= h(iso_time(pick($row, ['created_time', 'ts'], '') ?: null)) ?></td>
+                    <td data-label="Market"><?php if ($tickerValue !== '—'): ?><a href="/?page=market&amp;ticker=<?= h(rawurlencode($tickerValue)) ?>"><?= h($tickerValue) ?></a><?php else: ?>—<?php endif; ?></td>
+                    <td data-label="Outcome"><?= h(pick($row, ['outcome_side', 'side'])) ?></td>
+                    <td class="num" data-label="Count"><?= h(pick($row, ['count_fp', 'count'])) ?></td>
+                    <td class="num" data-label="Yes price"><?= h(px(pick($row, ['yes_price_dollars', 'price'], ''))) ?></td>
+                    <td data-label="Role"><?= h($role) ?></td>
+                    <td data-label="Time"><?= h(iso_time(pick($row, ['created_time', 'ts'], '') ?: null)) ?></td>
                 </tr>
             <?php endforeach; ?>
             </tbody>

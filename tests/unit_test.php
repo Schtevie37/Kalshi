@@ -131,6 +131,24 @@ check($noWin['won'] && $noWin['profit'] === '6.0000', 'no at 0.40 wins when the 
 check(Scorecard::marketResult(['result' => '']) === null, 'an empty result stays open');
 check(Scorecard::marketResult(['result' => 'YES']) === 'yes', 'a yes result settles');
 check(Scorecard::marketResult([]) === null, 'a missing result stays open');
+$totals = Scorecard::totals([
+    ['outcome' => 'yes', 'pay_price' => '0.4000', 'contract_count' => '10.00', 'market_result' => 'yes'],
+    ['outcome' => 'yes', 'pay_price' => '0.4000', 'contract_count' => '10.00', 'market_result' => 'no'],
+    ['outcome' => 'yes', 'pay_price' => '0.5000', 'contract_count' => '2.00', 'market_result' => null],
+]);
+check(
+    $totals['count'] === 3
+        && $totals['open'] === 1
+        && $totals['wins'] === 1
+        && $totals['losses'] === 1
+        && $totals['success_rate'] === '50.0'
+        && $totals['placed'] === '9.0000'
+        && $totals['open_stake'] === '1.0000'
+        && $totals['payout'] === '10.0000'
+        && $totals['profit'] === '2.0000'
+        && $totals['average_return'] === '25.0',
+    'scorecard totals ignore open stake in success and return'
+);
 $leadingDot = Scorecard::entry('KXNFLTD-26OCT11BALATL-ATLBROBINSON7-1', 'yes', '.62', '1');
 check($leadingDot['pay_price'] === '0.6200' && $leadingDot['count'] === '1.00', 'a price typed as .62 is 0.6200');
 $priceRejected = false;

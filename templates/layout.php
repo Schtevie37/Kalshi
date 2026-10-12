@@ -40,7 +40,7 @@ $trading = !is_array($exchange) || !array_key_exists('trading_active', $exchange
             <?php endforeach; ?>
         </nav>
         <div class="nav-foot">
-            <p>Orders go to the demo exchange and use mock funds.</p>
+            <p class="desk-note">Orders go to the demo exchange and use mock funds.</p>
             <?php if (is_array($user)): ?>
                 <p class="who"><?= h($user['email']) ?></p>
                 <a href="/?page=logout">Sign out</a>

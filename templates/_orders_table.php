@@ -1,4 +1,4 @@
-<div class="table-wrap">
+<div class="table-wrap cards">
     <table>
         <thead>
         <tr>
@@ -20,13 +20,13 @@
             $outcome = pick($row, ['outcome_side', 'side']);
             ?>
             <tr>
-                <td><?php if ($tickerValue !== '—'): ?><a href="/?page=market&amp;ticker=<?= h(rawurlencode($tickerValue)) ?>"><?= h($tickerValue) ?></a><?php else: ?>—<?php endif; ?></td>
-                <td><span class="pill <?= strtolower($outcome) === 'no' ? 'no' : 'yes' ?>"><?= h($outcome) ?></span></td>
-                <td class="num"><?= h(px(pick($row, ['yes_price_dollars', 'price', 'no_price_dollars'], ''))) ?></td>
-                <td class="num"><?= h(pick($row, ['remaining_count_fp', 'remaining_count'])) ?></td>
-                <td class="num"><?= h(pick($row, ['fill_count_fp', 'fill_count'])) ?></td>
-                <td><?= h(pick($row, ['status'])) ?></td>
-                <td>
+                <td data-label="Market"><?php if ($tickerValue !== '—'): ?><a href="/?page=market&amp;ticker=<?= h(rawurlencode($tickerValue)) ?>"><?= h($tickerValue) ?></a><?php else: ?>—<?php endif; ?></td>
+                <td data-label="Outcome"><span class="pill <?= strtolower($outcome) === 'no' ? 'no' : 'yes' ?>"><?= h($outcome) ?></span></td>
+                <td class="num" data-label="Price"><?= h(px(pick($row, ['yes_price_dollars', 'price', 'no_price_dollars'], ''))) ?></td>
+                <td class="num" data-label="Remaining"><?= h(pick($row, ['remaining_count_fp', 'remaining_count'])) ?></td>
+                <td class="num" data-label="Filled"><?= h(pick($row, ['fill_count_fp', 'fill_count'])) ?></td>
+                <td data-label="Status"><?= h(pick($row, ['status'])) ?></td>
+                <td data-label="">
                     <?php if ($status === 'resting' && $orderId !== '' && $tickerValue !== '—'): ?>
                         <form method="post" action="/?page=cancel" class="inline">
                             <?= csrf_field() ?>

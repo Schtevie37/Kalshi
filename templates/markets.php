@@ -14,7 +14,7 @@
 <?php elseif ($markets === []): ?>
     <p class="empty">No open markets matched.</p>
 <?php else: ?>
-    <div class="table-wrap">
+    <div class="table-wrap cards">
         <table>
             <thead>
             <tr>
@@ -30,15 +30,15 @@
             <?php foreach ($markets as $market): ?>
                 <?php $tickerValue = (string) ($market['ticker'] ?? ''); ?>
                 <tr>
-                    <td>
+                    <td data-label="Market">
                         <a href="/?page=market&amp;ticker=<?= h(rawurlencode($tickerValue)) ?>"><?= h($market['title'] ?? $tickerValue) ?></a>
                         <span class="ticker"><?= h($tickerValue) ?></span>
                     </td>
-                    <td class="num"><?= h(px((string) ($market['yes_bid_dollars'] ?? ''))) ?></td>
-                    <td class="num"><?= h(px((string) ($market['yes_ask_dollars'] ?? ''))) ?></td>
-                    <td class="num"><?= h(px((string) ($market['last_price_dollars'] ?? ''))) ?></td>
-                    <td class="num"><?= h((string) ($market['volume_fp'] ?? '—')) ?></td>
-                    <td><?= h(iso_time($market['close_time'] ?? null)) ?></td>
+                    <td class="num" data-label="Yes bid"><?= h(px((string) ($market['yes_bid_dollars'] ?? ''))) ?></td>
+                    <td class="num" data-label="Yes ask"><?= h(px((string) ($market['yes_ask_dollars'] ?? ''))) ?></td>
+                    <td class="num" data-label="Last"><?= h(px((string) ($market['last_price_dollars'] ?? ''))) ?></td>
+                    <td class="num" data-label="Volume"><?= h((string) ($market['volume_fp'] ?? '—')) ?></td>
+                    <td data-label="Closes"><?= h(iso_time($market['close_time'] ?? null)) ?></td>
                 </tr>
             <?php endforeach; ?>
             </tbody>

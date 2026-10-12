@@ -6,7 +6,7 @@
     <?php if ($entries === []): ?>
         <p class="empty">No orders yet.</p>
     <?php else: ?>
-        <div class="table-wrap">
+        <div class="table-wrap cards">
             <table>
                 <thead>
                 <tr>
@@ -22,13 +22,13 @@
                 <tbody>
                 <?php foreach ($entries as $entry): ?>
                     <tr>
-                        <td><?= h(iso_time($entry['created_at'])) ?></td>
-                        <td><a href="/?page=market&amp;ticker=<?= h(rawurlencode($entry['ticker'])) ?>"><?= h($entry['ticker']) ?></a></td>
-                        <td><?= h(strtoupper($entry['outcome'])) ?> · <?= h($entry['book_side']) ?></td>
-                        <td class="num"><?= h(px((string) $entry['pay_price'])) ?></td>
-                        <td class="num"><?= h(px((string) $entry['api_price'])) ?></td>
-                        <td class="num"><?= h((string) $entry['contract_count']) ?></td>
-                        <td>
+                        <td data-label="When"><?= h(iso_time($entry['created_at'])) ?></td>
+                        <td data-label="Market"><a href="/?page=market&amp;ticker=<?= h(rawurlencode($entry['ticker'])) ?>"><?= h($entry['ticker']) ?></a></td>
+                        <td data-label="Side"><?= h(strtoupper($entry['outcome'])) ?> · <?= h($entry['book_side']) ?></td>
+                        <td class="num" data-label="You pay"><?= h(px((string) $entry['pay_price'])) ?></td>
+                        <td class="num" data-label="Sent price"><?= h(px((string) $entry['api_price'])) ?></td>
+                        <td class="num" data-label="Count"><?= h((string) $entry['contract_count']) ?></td>
+                        <td data-label="Status">
                             <?= h($entry['status']) ?>
                             <?php if (!empty($entry['error_message'])): ?>
                                 <span class="ticker"><?= h($entry['error_message']) ?></span>
@@ -49,7 +49,7 @@
     <?php if ($calls === []): ?>
         <p class="empty">No signed calls yet.</p>
     <?php else: ?>
-        <div class="table-wrap">
+        <div class="table-wrap cards">
             <table>
                 <thead>
                 <tr><th>When</th><th>Call</th><th class="num">HTTP</th><th>Note</th></tr>
@@ -57,10 +57,10 @@
                 <tbody>
                 <?php foreach ($calls as $call): ?>
                     <tr>
-                        <td><?= h(iso_time($call['created_at'])) ?></td>
-                        <td><?= h($call['method']) ?> <?= h($call['path']) ?></td>
-                        <td class="num"><?= h((string) ($call['http_status'] ?? '—')) ?></td>
-                        <td><?= h((string) ($call['error_message'] ?? '')) ?></td>
+                        <td data-label="When"><?= h(iso_time($call['created_at'])) ?></td>
+                        <td data-label="Call"><?= h($call['method']) ?> <?= h($call['path']) ?></td>
+                        <td class="num" data-label="HTTP"><?= h((string) ($call['http_status'] ?? '—')) ?></td>
+                        <td data-label="Note"><?= h((string) ($call['error_message'] ?? '')) ?></td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>

@@ -33,7 +33,7 @@
     <?php if ($positions === []): ?>
         <p class="empty">No unsettled positions returned.</p>
     <?php else: ?>
-        <div class="table-wrap">
+        <div class="table-wrap cards">
             <table>
                 <thead>
                 <tr>
@@ -48,11 +48,11 @@
                 <?php foreach ($positions as $row): ?>
                     <?php $tickerValue = pick($row, ['ticker', 'market_ticker']); ?>
                     <tr>
-                        <td><?php if ($tickerValue !== '—'): ?><a href="/?page=market&amp;ticker=<?= h(rawurlencode($tickerValue)) ?>"><?= h($tickerValue) ?></a><?php else: ?>—<?php endif; ?></td>
-                        <td class="num"><?= h(pick($row, ['position_fp', 'position'])) ?></td>
-                        <td class="num"><?= h(px(pick($row, ['market_exposure_dollars', 'market_exposure'], ''))) ?></td>
-                        <td class="num"><?= h(px(pick($row, ['realized_pnl_dollars', 'realized_pnl'], ''))) ?></td>
-                        <td class="num"><?= h(px(pick($row, ['fees_paid_dollars', 'fees_paid'], ''))) ?></td>
+                        <td data-label="Market"><?php if ($tickerValue !== '—'): ?><a href="/?page=market&amp;ticker=<?= h(rawurlencode($tickerValue)) ?>"><?= h($tickerValue) ?></a><?php else: ?>—<?php endif; ?></td>
+                        <td class="num" data-label="Position"><?= h(pick($row, ['position_fp', 'position'])) ?></td>
+                        <td class="num" data-label="Exposure"><?= h(px(pick($row, ['market_exposure_dollars', 'market_exposure'], ''))) ?></td>
+                        <td class="num" data-label="Realized"><?= h(px(pick($row, ['realized_pnl_dollars', 'realized_pnl'], ''))) ?></td>
+                        <td class="num" data-label="Fees"><?= h(px(pick($row, ['fees_paid_dollars', 'fees_paid'], ''))) ?></td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>

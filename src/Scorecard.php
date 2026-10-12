@@ -89,6 +89,63 @@ final class Scorecard
         ];
     }
 
+    /**
+     * Success and return use settled positions only. Open stake stays in placed and open_stake.
+     *
+     * @param array<int, array<string, mixed>> $positions
+     * @return array{count: int, open: int, settled: int, wins: int, losses: int, success_rate: ?string, placed: string, open_stake: string, payout: string, profit: string, average_return: ?string}
+     */
+    public static function totals(array $positions): array
+    {
+        $count = 0;
+        $open = 0;
+        $wins = 0;
+        $placed = 0;
+        $openStake = 0;
+        $settledCost = 0;
+        $payout = 0;
+        $profit = 0;
+        foreach ($positions as $position) {
+            if (!is_array($position)) {
+                continue;
+            }
+            $pay = Pricing::parse((string) ($position['pay_price'] ?? ''), Pricing::PRICE_SCALE, 'Price');
+            $contracts = Pricing::parse((string) ($position['contract_count'] ?? ''), Pricing::COUNT_SCALE, 'Contracts');
+            $cost = $pay * $contracts;
+            $count++;
+            $placed += $cost;
+            $result = strtolower(trim((string) ($position['market_result'] ?? '')));
+            if ($result !== 'yes' && $result !== 'no') {
+                $open++;
+                $openStake += $cost;
+                continue;
+            }
+            $won = strtolower(trim((string) ($position['outcome'] ?? ''))) === $result;
+            if ($won) {
+                $wins++;
+            }
+            $rowPayout = $won ? $contracts * Pricing::DOLLAR : 0;
+            $settledCost += $cost;
+            $payout += $rowPayout;
+            $profit += $rowPayout - $cost;
+        }
+        $settled = $count - $open;
+
+        return [
+            'count' => $count,
+            'open' => $open,
+            'settled' => $settled,
+            'wins' => $wins,
+            'losses' => $settled - $wins,
+            'success_rate' => $settled > 0 ? self::ratioPercent($wins, $settled) : null,
+            'placed' => self::micro($placed),
+            'open_stake' => self::micro($openStake),
+            'payout' => self::micro($payout),
+            'profit' => self::micro($profit),
+            'average_return' => $settledCost > 0 ? self::ratioPercent($profit, $settledCost) : null,
+        ];
+    }
+
     private static function micro(int $micro): string
     {
         $negative = $micro < 0;
@@ -96,5 +153,14 @@ final class Scorecard
         $units = intdiv($micro + 50, 100);
 
         return ($negative ? '-' : '') . Pricing::format($units, Pricing::PRICE_SCALE);
+    }
+
+    private static function ratioPercent(int $numerator, int $denominator): string
+    {
+        $negative = $numerator < 0;
+        $numerator = abs($numerator);
+        $scaled = intdiv($numerator * 1000 + intdiv($denominator, 2), $denominator);
+
+        return ($negative ? '-' : '') . intdiv($scaled, 10) . '.' . ($scaled % 10);
     }
 }

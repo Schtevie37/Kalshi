@@ -26,12 +26,68 @@
     </form>
 </section>
 
+<?php
+$summary = (isset($totals) && is_array($totals)) ? $totals : null;
+if ($summary === null && $positions !== []) {
+    try {
+        $summary = Scorecard::totals($positions);
+    } catch (Throwable) {
+        $summary = null;
+    }
+}
+$asPercent = static function (mixed $value): string {
+    if (!is_string($value) || !preg_match('/^-?\d+\.\d$/', $value)) {
+        return '—';
+    }
+    $negative = str_starts_with($value, '-');
+
+    return ($negative ? '−' : '') . ltrim($value, '-') . '%';
+};
+?>
+<?php if (is_array($summary)): ?>
+    <section class="stats">
+        <article>
+            <p>Orders</p>
+            <strong><?= h((string) $summary['count']) ?></strong>
+        </article>
+        <article>
+            <p>Record</p>
+            <strong><?= $summary['settled'] > 0 ? h($summary['wins'] . '–' . $summary['losses']) : '—' ?></strong>
+        </article>
+        <article>
+            <p>Success</p>
+            <strong><?= h($asPercent($summary['success_rate'])) ?></strong>
+        </article>
+        <article>
+            <p>Placed</p>
+            <strong><?= h(money($summary['placed'])) ?></strong>
+        </article>
+        <article>
+            <p>Still open</p>
+            <strong><?= h(money($summary['open_stake'])) ?></strong>
+        </article>
+        <article>
+            <p>Paid out</p>
+            <strong><?= h(money($summary['payout'])) ?></strong>
+        </article>
+        <article>
+            <p>Earned</p>
+            <strong><?= h(money($summary['profit'])) ?></strong>
+        </article>
+        <article>
+            <p>Average return</p>
+            <strong><?= h($asPercent($summary['average_return'])) ?></strong>
+        </article>
+    </section>
+    <p class="fine">Success and average return use settled positions only. Earned is their payout minus their cost. Still open is stake waiting on a result. Fees are left out.</p>
+<?php endif; ?>
+
 <section class="panel">
     <header class="panel-head"><h2>Positions</h2></header>
     <?php if ($positions === []): ?>
         <p class="empty">No positions yet.</p>
     <?php else: ?>
-        <div class="table-wrap">
+        <div class="table-wrap cards">
             <table>
                 <thead>
                 <tr>
@@ -54,13 +110,13 @@
                     $settled = $score !== null;
                     ?>
                     <tr>
-                        <td><?= h(iso_time($position['created_at'])) ?></td>
-                        <td><span class="ticker"><?= h($position['ticker']) ?></span></td>
-                        <td><span class="pill <?= $position['outcome'] === 'no' ? 'no' : 'yes' ?>"><?= h(strtoupper((string) $position['outcome'])) ?></span></td>
-                        <td class="num"><?= h(px((string) $position['pay_price'])) ?></td>
-                        <td class="num"><?= h((string) $position['contract_count']) ?></td>
-                        <td class="num"><?= h(money($cost)) ?></td>
-                        <td>
+                        <td data-label="When"><?= h(iso_time($position['created_at'])) ?></td>
+                        <td data-label="Market"><span class="ticker"><?= h($position['ticker']) ?></span></td>
+                        <td data-label="Side"><span class="pill <?= $position['outcome'] === 'no' ? 'no' : 'yes' ?>"><?= h(strtoupper((string) $position['outcome'])) ?></span></td>
+                        <td class="num" data-label="Price"><?= h(px((string) $position['pay_price'])) ?></td>
+                        <td class="num" data-label="Contracts"><?= h((string) $position['contract_count']) ?></td>
+                        <td class="num" data-label="Cost"><?= h(money($cost)) ?></td>
+                        <td data-label="Result">
                             <?php if ($settled): ?>
                                 <span class="pill <?= $score['won'] ? 'yes' : 'no' ?>"><?= $score['won'] ? 'Won' : 'Lost' ?></span>
                                 <span class="ticker"><?= h(strtoupper((string) $position['market_result'])) ?></span>
@@ -71,8 +127,8 @@
                                 <?php endif; ?>
                             <?php endif; ?>
                         </td>
-                        <td class="num"><?= $settled ? h(money($score['payout'])) : '—' ?></td>
-                        <td class="num"><?= $settled ? h(money($score['profit'])) : '—' ?></td>
+                        <td class="num" data-label="Payout"><?= $settled ? h(money($score['payout'])) : '—' ?></td>
+                        <td class="num" data-label="Profit"><?= $settled ? h(money($score['profit'])) : '—' ?></td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
