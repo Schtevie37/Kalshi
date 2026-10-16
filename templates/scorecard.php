@@ -88,15 +88,14 @@ $asPercent = static function (mixed $value): string {
             <table>
                 <thead>
                 <tr>
-                    <th>When</th>
                     <th>Market</th>
+                    <th>Result</th>
+                    <th class="num">Profit</th>
                     <th>Side</th>
                     <th class="num">Price</th>
                     <th class="num">Contracts</th>
                     <th class="num">Cost</th>
-                    <th>Result</th>
                     <th class="num">Payout</th>
-                    <th class="num">Profit</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -107,12 +106,7 @@ $asPercent = static function (mixed $value): string {
                     $settled = $score !== null;
                     ?>
                     <tr>
-                        <td data-label="When"><?= h(iso_time($position['created_at'], 'America/New_York')) ?></td>
                         <td data-label="Market"><?php if (!empty($position['market_title'])): ?><span class="market-name"><?= h($position['market_title']) ?></span><?php endif; ?><span class="ticker"><?= h($position['ticker']) ?></span></td>
-                        <td data-label="Side"><span class="pill <?= $position['outcome'] === 'no' ? 'no' : 'yes' ?>"><?= h(strtoupper((string) $position['outcome'])) ?></span></td>
-                        <td class="num" data-label="Price"><?= h(px((string) $position['pay_price'])) ?></td>
-                        <td class="num" data-label="Contracts"><?= h((string) $position['contract_count']) ?></td>
-                        <td class="num" data-label="Cost"><?= h(money($cost)) ?></td>
                         <td data-label="Result">
                             <?php if ($settled): ?>
                                 <span class="pill <?= $score['won'] ? 'yes' : 'no' ?>"><?= $score['won'] ? 'Won' : 'Lost' ?></span>
@@ -123,8 +117,12 @@ $asPercent = static function (mixed $value): string {
                                 <?php endif; ?>
                             <?php endif; ?>
                         </td>
-                        <td class="num" data-label="Payout"><?= $settled ? h(money($score['payout'])) : '—' ?></td>
                         <td class="num" data-label="Profit"><?= $settled ? h(money($score['profit'])) : '—' ?></td>
+                        <td data-label="Side"><span class="pill <?= $position['outcome'] === 'no' ? 'no' : 'yes' ?>"><?= h(strtoupper((string) $position['outcome'])) ?></span></td>
+                        <td class="num" data-label="Price"><?= h(px((string) $position['pay_price'])) ?></td>
+                        <td class="num" data-label="Contracts"><?= h((string) $position['contract_count']) ?></td>
+                        <td class="num" data-label="Cost"><?= h(money($cost)) ?></td>
+                        <td class="num" data-label="Payout"><?= $settled ? h(money($score['payout'])) : '—' ?></td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
