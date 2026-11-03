@@ -122,15 +122,62 @@ check(
         && $entry['count'] === '10.00',
     'scorecard entry normalizes a live ticker'
 );
+$fromLink = Scorecard::tickerFromInput('https://kalshi.com/markets/controls/senate-winner/controls-2026?op_order_side=no');
+check($fromLink === 'CONTROLS-2026', 'a kalshi.com link keeps the last part of the path');
+check(
+    Scorecard::marketLink('CONTROLS-2026-D') === 'https://kalshi.com/events/CONTROLS-2026?contract=CONTROLS-2026-D',
+    'a ticker links to its Kalshi contract'
+);
+$combo = Scorecard::tickerFromInput('https://kalshi.com/combos/politics/politics/senate?marketTicker=KXMVECROSSCATEGORY-S2026EB93D1CCFA4-583B6D6D451');
+check($combo === 'KXMVECROSSCATEGORY-S2026EB93D1CCFA4-583B6D6D451', 'a combo link uses the marketTicker');
+check(
+    Scorecard::marketLink($combo) === 'https://kalshi.com/combos?marketTicker=KXMVECROSSCATEGORY-S2026EB93D1CCFA4-583B6D6D451',
+    'a combo ticker links to the combo page'
+);
+$foreignLink = false;
+try {
+    Scorecard::tickerFromInput('https://example.com/markets/controls-2026');
+} catch (InvalidArgumentException) {
+    $foreignLink = true;
+}
+check($foreignLink, 'a link from another site is rejected');
+$several = false;
+$severalMessage = '';
+try {
+    Scorecard::onlyMarket([
+        ['ticker' => 'CONTROLS-2026-D', 'yes_sub_title' => 'Democratic Party'],
+        ['ticker' => 'CONTROLS-2026-R', 'yes_sub_title' => 'Republican Party'],
+    ]);
+} catch (InvalidArgumentException $e) {
+    $several = true;
+    $severalMessage = $e->getMessage();
+}
+check($several && str_contains($severalMessage, 'CONTROLS-2026-D') && str_contains($severalMessage, 'CONTROLS-2026-R'), 'an event page names each contract');
+$one = Scorecard::onlyMarket([['ticker' => 'CONTROLS-2026-D', 'yes_sub_title' => 'Democratic Party']]);
+check(($one['ticker'] ?? '') === 'CONTROLS-2026-D', 'an event with one contract is that contract');
 check(Scorecard::marketTitle(['title' => "  Will Atlanta's Bijan Robinson score?  "]) === "Will Atlanta's Bijan Robinson score?", 'scorecard keeps the market title');
 check(Scorecard::marketTitle(['title' => '   ']) === null, 'a blank market title is left off');
 check(Scorecard::marketTitle([]) === null, 'a market with no title is left off');
+check(Scorecard::currentPrice(['yes_bid_dollars' => '0.7600', 'no_bid_dollars' => '0.2300'], 'yes') === '0.7600', 'an open yes position uses the yes bid');
+check(Scorecard::currentPrice(['yes_bid_dollars' => '0.7600', 'no_bid_dollars' => '0.2300'], 'NO') === '0.2300', 'an open no position uses the no bid');
+check(Scorecard::currentPrice(['yes_bid_dollars' => '0.0000', 'last_price_dollars' => '0.4000'], 'no') === '0.6000', 'a no position with no bid uses one minus the last yes price');
+check(Scorecard::currentPrice([], 'yes') === null, 'a market with no quote has no current price');
 $win = Scorecard::settle('yes', '0.4000', '10.00', 'yes');
 check($win['won'] && $win['cost'] === '4.0000' && $win['payout'] === '10.0000' && $win['profit'] === '6.0000', 'yes at 0.40 pays 6 when the result is yes');
 $loss = Scorecard::settle('yes', '0.4000', '10.00', 'no');
 check(!$loss['won'] && $loss['payout'] === '0.0000' && $loss['profit'] === '-4.0000', 'yes at 0.40 loses the cost when the result is no');
 $noWin = Scorecard::settle('no', '0.4000', '10.00', 'no');
 check($noWin['won'] && $noWin['profit'] === '6.0000', 'no at 0.40 wins when the result is no');
+check(Scorecard::eventDate('KXNFLTD-26OCT11BALATL-ATLBROBINSON7-1') === '2026-10-11', 'a ticker date is the event day');
+check(Scorecard::eventDate('CONTROLS-2026-D') === '2026-01-01', 'a year-only ticker sorts as that year');
+$ordered = [
+    ['id' => 1, 'ticker' => 'KX-26OCT11X', 'market_result' => 'yes'],
+    ['id' => 2, 'ticker' => 'KX-26OCT12X', 'market_result' => null],
+    ['id' => 3, 'ticker' => 'KX-26OCT10X', 'market_result' => ''],
+    ['id' => 4, 'ticker' => 'CONTROLS-2026-D', 'market_result' => 'no'],
+];
+usort($ordered, [Scorecard::class, 'comparePositions']);
+check(array_column($ordered, 'id') === [2, 3, 1, 4], 'open positions come first, then the latest event date');
 check(Scorecard::marketResult(['result' => '']) === null, 'an empty result stays open');
 check(Scorecard::marketResult(['result' => 'YES']) === 'yes', 'a yes result settles');
 check(Scorecard::marketResult([]) === null, 'a missing result stays open');
@@ -154,9 +201,13 @@ check(
 );
 $leadingDot = Scorecard::entry('KXNFLTD-26OCT11BALATL-ATLBROBINSON7-1', 'yes', '.62', '1');
 check($leadingDot['pay_price'] === '0.6200' && $leadingDot['count'] === '1.00', 'a price typed as .62 is 0.6200');
+$cents = Scorecard::entry('KXNFLTD-26OCT11BALATL-ATLBROBINSON7-1', 'yes', '10', '1');
+check($cents['pay_price'] === '0.1000', 'a whole-number price is cents, so 10 is $0.10');
+$oneCent = Scorecard::entry('KXNFLTD-26OCT11BALATL-ATLBROBINSON7-1', 'yes', '1', '1');
+check($oneCent['pay_price'] === '0.0100', 'a price of 1 is one cent');
 $priceRejected = false;
 try {
-    Scorecard::entry('KXNFLTD-26OCT11BALATL-ATLBROBINSON7-1', 'yes', '1', '1');
+    Scorecard::entry('KXNFLTD-26OCT11BALATL-ATLBROBINSON7-1', 'yes', '1.00', '1');
 } catch (InvalidArgumentException) {
     $priceRejected = true;
 }

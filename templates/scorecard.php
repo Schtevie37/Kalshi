@@ -5,7 +5,7 @@
     <form method="post" action="/?page=scorecard" class="stack" autocomplete="off">
         <?= csrf_field() ?>
         <input type="hidden" name="action" value="add">
-        <label>Ticker
+        <label>Ticker or Kalshi link
             <input name="ticker" required spellcheck="false" autocomplete="off" value="">
         </label>
         <label>Side
@@ -93,9 +93,11 @@ $asPercent = static function (mixed $value): string {
                     <th class="num">Profit</th>
                     <th>Side</th>
                     <th class="num">Price</th>
+                    <th class="num">Current</th>
                     <th class="num">Contracts</th>
                     <th class="num">Cost</th>
                     <th class="num">Payout</th>
+                    <th></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -106,7 +108,7 @@ $asPercent = static function (mixed $value): string {
                     $settled = $score !== null;
                     ?>
                     <tr>
-                        <td data-label="Market"><?php if (!empty($position['market_title'])): ?><span class="market-name"><?= h($position['market_title']) ?></span><?php endif; ?><span class="ticker"><?= h($position['ticker']) ?></span></td>
+                        <td data-label="Market"><?php if (!empty($position['market_title'])): ?><span class="market-name"><?= h($position['market_title']) ?></span><?php endif; ?><a class="ticker" href="<?= h(Scorecard::marketLink((string) $position['ticker'])) ?>" target="_blank" rel="noopener noreferrer"><?= h($position['ticker']) ?></a></td>
                         <td data-label="Result">
                             <?php if ($settled): ?>
                                 <span class="pill <?= $score['won'] ? 'yes' : 'no' ?>"><?= $score['won'] ? 'Won' : 'Lost' ?></span>
@@ -120,9 +122,18 @@ $asPercent = static function (mixed $value): string {
                         <td class="num" data-label="Profit"><?= $settled ? h(money($score['profit'])) : '—' ?></td>
                         <td data-label="Side"><span class="pill <?= $position['outcome'] === 'no' ? 'no' : 'yes' ?>"><?= h(strtoupper((string) $position['outcome'])) ?></span></td>
                         <td class="num" data-label="Price"><?= h(px((string) $position['pay_price'])) ?></td>
+                        <td class="num" data-label="Current"><?= is_string($position['current_price'] ?? null) ? h(px($position['current_price'])) : '—' ?></td>
                         <td class="num" data-label="Contracts"><?= h((string) $position['contract_count']) ?></td>
                         <td class="num" data-label="Cost"><?= h(money($cost)) ?></td>
                         <td class="num" data-label="Payout"><?= $settled ? h(money($score['payout'])) : '—' ?></td>
+                        <td data-label="">
+                            <form method="post" action="/?page=scorecard" class="inline">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="id" value="<?= h((string) $position['id']) ?>">
+                                <button type="submit" class="quiet">Remove</button>
+                            </form>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>

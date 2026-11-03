@@ -23,7 +23,35 @@ final class LiveMarket
      */
     public function fetch(string $ticker): array
     {
-        $url = self::marketUrl($ticker);
+        $decoded = $this->get(self::marketUrl($ticker));
+        $market = $decoded['market'] ?? null;
+        if (!is_array($market)) {
+            throw new KalshiException('The live market response did not include a market.');
+        }
+
+        return $market;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function eventMarkets(string $eventTicker): array
+    {
+        $eventTicker = ticker($eventTicker);
+        $decoded = $this->get(self::ORIGIN . self::PREFIX . '/events/' . rawurlencode($eventTicker));
+        $markets = $decoded['markets'] ?? null;
+        if (!is_array($markets)) {
+            throw new KalshiException('The live event response did not include markets.');
+        }
+
+        return array_values(array_filter($markets, 'is_array'));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function get(string $url): array
+    {
         $ch = curl_init($url);
         if ($ch === false) {
             throw new RuntimeException('Could not start the HTTP client.');
@@ -52,17 +80,13 @@ final class LiveMarket
 
         $decoded = json_decode($raw, true);
         if ($status < 200 || $status >= 300) {
-            throw new KalshiException(self::summarize($status, $raw, $decoded), $status, $decoded);
+            throw new KalshiException(self::summarize($status, is_string($raw) ? $raw : '', $decoded), $status, $decoded);
         }
         if (!is_array($decoded)) {
             throw new KalshiException('The live market response could not be read.', $status);
         }
-        $market = $decoded['market'] ?? null;
-        if (!is_array($market)) {
-            throw new KalshiException('The live market response did not include a market.', $status);
-        }
 
-        return $market;
+        return $decoded;
     }
 
     private static function summarize(int $status, string $raw, mixed $decoded): string

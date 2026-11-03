@@ -66,6 +66,38 @@ function is_uuid(string $value): bool
     return (bool) preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $value);
 }
 
+/**
+ * @return array{ticker: string, title: ?string}
+ */
+function resolve_scorecard_market(string $ticker): array
+{
+    $live = new LiveMarket();
+    try {
+        $market = $live->fetch($ticker);
+    } catch (KalshiException $e) {
+        if ($e->status !== 404) {
+            return ['ticker' => $ticker, 'title' => null];
+        }
+        try {
+            $markets = $live->eventMarkets($ticker);
+        } catch (KalshiException $eventError) {
+            if ($eventError->status === 404) {
+                throw new InvalidArgumentException('That link did not match a Kalshi market.');
+            }
+
+            return ['ticker' => $ticker, 'title' => null];
+        }
+        $market = Scorecard::onlyMarket($markets);
+    }
+    $resolved = strtoupper(trim((string) ($market['ticker'] ?? '')));
+    if ($resolved === '') {
+        throw new InvalidArgumentException('That link did not match a Kalshi market.');
+    }
+    ticker($resolved);
+
+    return ['ticker' => $resolved, 'title' => Scorecard::marketTitle($market)];
+}
+
 function ticker(string $value): string
 {
     $value = trim($value);
