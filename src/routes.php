@@ -546,7 +546,7 @@ function dispatch_scorecard(): void
                 $stmt = db()->prepare('DELETE FROM tracked_positions WHERE id = ? AND user_id = ?');
                 $stmt->execute([$id, (int) $user['id']]);
                 flash('ok', 'Position removed.');
-                redirect_to('scorecard');
+                redirect_to('scorecard', scorecard_return());
             }
             if ($action === 'add') {
                 $entry = Scorecard::entry(
@@ -590,7 +590,7 @@ function dispatch_scorecard(): void
             throw new InvalidArgumentException('Unknown scorecard action.');
         } catch (Throwable $e) {
             flash('error', $e instanceof PDOException ? 'The desk could not use MySQL.' : $e->getMessage());
-            redirect_to('scorecard');
+            redirect_to('scorecard', scorecard_return());
         }
     }
 
@@ -659,6 +659,7 @@ function dispatch_scorecard(): void
             }
             $update->execute([$found, (int) $row['id'], (int) $user['id']]);
             $row['market_result'] = $found;
+            $row['settled_at'] = gmdate('Y-m-d H:i:s');
             $row['score'] = Scorecard::settle(
                 (string) $row['outcome'],
                 (string) $row['pay_price'],
@@ -673,13 +674,28 @@ function dispatch_scorecard(): void
         $rows[$index] = $row;
     }
     usort($rows, [Scorecard::class, 'comparePositions']);
+    $showOlder = (string) ($_GET['show'] ?? '') === 'older';
+    $visible = [];
+    foreach ($rows as $row) {
+        if (!is_array($row) || Scorecard::showsInRecent($row) === $showOlder) {
+            continue;
+        }
+        $visible[] = $row;
+    }
 
     view('scorecard', [
         'title' => 'Scorecard',
         'page' => 'scorecard',
-        'positions' => $rows,
+        'positions' => $visible,
+        'position_count' => count($rows),
+        'show' => $showOlder ? 'older' : 'recent',
         'totals' => Scorecard::totals($rows),
     ]);
+}
+
+function scorecard_return(): array
+{
+    return ((string) ($_POST['show'] ?? '')) === 'older' ? ['show' => 'older'] : [];
 }
 
 function dispatch_settings(): void

@@ -284,12 +284,53 @@ final class Scorecard
         if ($leftOpen !== $rightOpen) {
             return $leftOpen ? -1 : 1;
         }
+        if (!$leftOpen) {
+            $byClosed = strcmp(self::whenClosed($right), self::whenClosed($left));
+            if ($byClosed !== 0) {
+                return $byClosed;
+            }
+        }
         $byDate = strcmp(self::eventDate((string) ($right['ticker'] ?? '')), self::eventDate((string) ($left['ticker'] ?? '')));
         if ($byDate !== 0) {
             return $byDate;
         }
 
         return ((int) ($right['id'] ?? 0)) <=> ((int) ($left['id'] ?? 0));
+    }
+
+    /**
+     * Recent is every open position, plus anything that settled today, yesterday, or the day before in Eastern time.
+     *
+     * @param array<string, mixed> $position
+     */
+    public static function showsInRecent(array $position, ?DateTimeImmutable $now = null): bool
+    {
+        if (self::isOpen($position)) {
+            return true;
+        }
+        $closed = self::whenClosed($position);
+        if ($closed === '') {
+            return false;
+        }
+        $zone = new DateTimeZone('America/New_York');
+        try {
+            $settled = new DateTimeImmutable($closed, new DateTimeZone('UTC'));
+            $now = ($now ?? new DateTimeImmutable('now', $zone))->setTimezone($zone);
+        } catch (Exception) {
+            return false;
+        }
+        $settledDay = $settled->setTimezone($zone)->setTime(0, 0);
+        $oldest = $now->setTime(0, 0)->modify('-2 days');
+
+        return $settledDay >= $oldest;
+    }
+
+    /**
+     * @param array<string, mixed> $position
+     */
+    private static function whenClosed(array $position): string
+    {
+        return trim((string) ($position['settled_at'] ?? ''));
     }
 
     /**

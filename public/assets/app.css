@@ -65,13 +65,41 @@ h3 { font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.06em; colo
 .nav-foot { margin-top: auto; color: #c8b8a4; font-size: 0.85rem; }
 .nav-foot a { color: #f3ecdf; }
 .who { margin-bottom: 0.4rem; word-break: break-all; }
-.main { padding: 1.75rem 2rem 3rem; max-width: 1080px; }
+.main { padding: 1.75rem 2rem 3rem; max-width: 1080px; min-width: 0; }
+.main.wide { max-width: none; }
+.main.wide > :not(.positions-panel) { max-width: calc(1080px - 4rem); }
+.positions-panel { min-width: 0; }
 
 .kicker { margin: 0 0 0.35rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; }
 .lede { color: var(--muted); max-width: 42rem; }
 .fine { color: var(--muted); font-size: 0.88rem; }
 .market-name { display: block; }
 .ticker { display: block; color: var(--muted); font-family: var(--mono); font-size: 0.75rem; margin-top: 0.15rem; }
+.positions th.market,
+.positions td.market { width: 0; max-width: max-content; }
+.market-box { display: grid; width: max-content; max-width: max-content; }
+.market-sizer,
+.market-scroll { grid-area: 1 / 1; }
+.market-sizer {
+    visibility: hidden;
+    height: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    font-family: var(--sans);
+    font-size: 1rem;
+    font-weight: 400;
+    letter-spacing: normal;
+    text-transform: none;
+}
+.market-scroll {
+    width: 0;
+    min-width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+}
+.market-track { width: max-content; min-width: 100%; }
 .empty { color: var(--muted); padding: 0.5rem 0 1rem; }
 
 .banner { padding: 0.75rem 0.9rem; border-radius: 8px; margin: 0 0 1rem; }
@@ -102,8 +130,8 @@ h3 { font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.06em; colo
     font-family: var(--mono); font-size: 0.75rem;
 }
 
-.table-wrap { overflow-x: auto; }
-.positions table { min-width: 52rem; border-collapse: separate; border-spacing: 0; }
+.table-wrap { overflow-x: auto; min-width: 0; }
+.positions table { width: 100%; min-width: 0; border-collapse: separate; border-spacing: 0; }
 .positions th, .positions td { white-space: nowrap; }
 .positions th:last-child,
 .positions td:last-child {
@@ -147,6 +175,8 @@ button.quiet { background: transparent; color: var(--ink); border-color: var(--l
 button:hover, .button:hover { background: #4a4038; }
 .inline { display: inline; }
 .tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.positions-panel .tabs { margin-bottom: 0; }
+.positions-panel .fine { margin: 0.15rem 0 0; }
 .tabs a { text-decoration: none; color: var(--ink); padding: 0.3rem 0.65rem; border-radius: 999px; border: 1px solid var(--line); }
 .tabs a.active { background: #3a312a; color: var(--nav-text); border-color: #4a4036; }
 .pager { margin-top: 1rem; }
@@ -230,4 +260,92 @@ button:hover, .button:hover { background: #4a4038; }
     .cards td[data-label=""]::before { content: none; }
     .cards td.num { font-family: var(--mono); }
     .cards .ticker { word-break: break-all; }
+
+    .positions { overflow: visible; }
+    .positions table,
+    .positions tbody { display: block; width: 100%; }
+    .positions thead { display: none; }
+    .positions tr {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        column-gap: 0.5rem;
+        row-gap: 0.7rem;
+        margin: 0 0 0.75rem;
+        padding: 0.8rem 0.75rem 0.7rem;
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+    }
+    .positions td {
+        display: block;
+        width: auto;
+        max-width: none;
+        border: 0;
+        padding: 0;
+        white-space: normal;
+        text-align: left;
+        position: static;
+        background: transparent;
+    }
+    .positions td.market { grid-column: 1 / -1; grid-row: 1; width: auto; max-width: none; }
+    .positions .market-box,
+    .positions .market-scroll,
+    .positions .market-track {
+        display: block;
+        width: auto;
+        min-width: 0;
+        max-width: 100%;
+        overflow: visible;
+    }
+    .positions .market-sizer { display: none; }
+    .positions .market-name { white-space: normal; overflow-wrap: break-word; }
+    .positions .ticker { white-space: normal; overflow-wrap: anywhere; }
+    .positions td[data-label]:not([data-label=""])::before {
+        content: attr(data-label);
+        display: block;
+        margin-bottom: 0.12rem;
+        color: var(--muted);
+        font-family: var(--sans);
+        font-size: 0.68rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+    .positions td.market[data-label]::before { content: none; }
+    .positions td.num { white-space: nowrap; font-size: 0.92rem; }
+    .positions td.cell-side { grid-column: 1; grid-row: 2; }
+    .positions td.cell-price { grid-column: 2; grid-row: 2; }
+    .positions td.cell-current { grid-column: 3; grid-row: 2; }
+    .positions tr.is-open td.cell-result,
+    .positions tr.is-open td.cell-profit { display: none; }
+    .positions tr.is-settled td.cell-current { display: none; }
+    .positions tr.is-settled td.cell-result {
+        grid-column: 3;
+        grid-row: 1;
+        justify-self: end;
+        align-self: start;
+        z-index: 1;
+    }
+    .positions tr.is-settled td.cell-result::before { content: none; }
+    .positions tr.is-settled td.market { padding-right: 3.4rem; }
+    .positions tr.is-settled td.cell-profit { grid-column: 3; grid-row: 2; padding-top: 0; align-self: start; }
+    .positions tr.is-open.has-error td.cell-result {
+        display: block;
+        grid-column: 1 / -1;
+        grid-row: 3;
+    }
+    .positions td.cell-count { grid-column: 1; grid-row: 3; }
+    .positions td.cell-cost { grid-column: 2; grid-row: 3; }
+    .positions td.cell-payout { grid-column: 3; grid-row: 3; }
+    .positions tr.is-open.has-error td.cell-count,
+    .positions tr.is-open.has-error td.cell-cost,
+    .positions tr.is-open.has-error td.cell-payout { grid-row: 4; }
+    .positions td.cell-remove {
+        grid-column: 1 / -1;
+        grid-row: 4;
+        text-align: right;
+    }
+    .positions tr.is-open.has-error td.cell-remove { grid-row: 5; }
+    .positions td.cell-remove form { margin: 0; }
+    .positions td.cell-remove button { width: auto; min-height: 2.4rem; padding: 0.3rem 0.85rem; }
 }

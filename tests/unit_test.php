@@ -178,6 +178,20 @@ $ordered = [
 ];
 usort($ordered, [Scorecard::class, 'comparePositions']);
 check(array_column($ordered, 'id') === [2, 3, 1, 4], 'open positions come first, then the latest event date');
+$closed = [
+    ['id' => 1, 'ticker' => 'KX-26OCT12X', 'market_result' => 'yes', 'settled_at' => '2026-10-12 23:00:00'],
+    ['id' => 2, 'ticker' => 'KX-26OCT01X', 'market_result' => 'no', 'settled_at' => '2026-11-02 01:00:00'],
+    ['id' => 3, 'ticker' => 'KX-26NOV01X', 'market_result' => 'yes', 'settled_at' => null],
+    ['id' => 4, 'ticker' => 'KX-26OCT20X', 'market_result' => null],
+];
+usort($closed, [Scorecard::class, 'comparePositions']);
+check(array_column($closed, 'id') === [4, 2, 1, 3], 'closed positions run from the most recent settlement to the oldest');
+$eastern = new DateTimeImmutable('2026-11-04 15:00:00', new DateTimeZone('America/New_York'));
+check(Scorecard::showsInRecent(['market_result' => null], $eastern), 'an open position stays on Recent');
+check(Scorecard::showsInRecent(['market_result' => 'yes', 'settled_at' => '2026-11-02 05:00:00'], $eastern), 'a settlement at the start of the third Eastern day stays on Recent');
+check(!Scorecard::showsInRecent(['market_result' => 'yes', 'settled_at' => '2026-11-02 04:59:59'], $eastern), 'a settlement just before that Eastern day is Older');
+check(!Scorecard::showsInRecent(['market_result' => 'no', 'settled_at' => ''], $eastern), 'a closed position with no settlement time is Older');
+check(!Scorecard::showsInRecent(['market_result' => 'yes', 'settled_at' => '2026-10-01 12:00:00'], $eastern), 'an older settlement is Older');
 check(Scorecard::marketResult(['result' => '']) === null, 'an empty result stays open');
 check(Scorecard::marketResult(['result' => 'YES']) === 'yes', 'a yes result settles');
 check(Scorecard::marketResult([]) === null, 'a missing result stays open');

@@ -55,7 +55,7 @@ $trading = !is_array($exchange) || !array_key_exists('trading_active', $exchange
             <?php endif; ?>
         </div>
     </aside>
-    <div class="main">
+    <div class="main<?= $page === 'scorecard' ? ' wide' : '' ?>">
         <?php if (!$trading): ?>
             <p class="banner warn">Trading is paused on the Kalshi demo exchange.</p>
         <?php endif; ?>
